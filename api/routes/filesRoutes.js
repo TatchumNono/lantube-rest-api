@@ -1,44 +1,119 @@
-const express = require("express");
+const fs = require('fs');
+const express = require('express');
+const ffmpeg = require('fluent-ffmpeg');
 const router = express.Router();
-const checkAuth = require("../middleware/check-auths");
+const checkAuth = require('../middleware/check-auths');
+const upload = require('../middleware/videoUpload-multer');
+
+const File = require('../models/fileModel');
 
 //route to get all the files
-router.get("/", checkAuth, (req, res, next) => {
+router.get('/', (req, res, next) => {
   res.status(200).json({
-    message: "Routes concerned with files are here",
+    message: 'Routes concerned with files are here',
   });
 });
 
-//routes to upload a file
-router.post("/upload", (req, res, next) => {
-  const file = {
-    fileName: req.body.file,
+//routes to upload a file checkAuth,
+//the field of the file named 'file' is passed with the middlewaere 'upload'
+router.post('/upload', checkAuth, upload, (req, res) => {
+  let filePath = '';
+  ffmpeg(req.file.path)
+    .on('filenames', function (filenames) {
+      console.log('Will generate ' + filenames.join(', '));
+      console.log('1 ' + filenames[0]);
+      filePath = './assets/thumbnail/' + filenames[0];
+      return filePath;
+    })
+    .on('end', function () {
+      console.log('Screenshots taken');
+      return filePath;
+    })
+    .on('error', function (err) {
+      console.error(err);
+    })
+    .screenshots({
+      // Will take screenshots at 20%, 40%, 60% and 80% of the video
+      count: 1,
+      folder: './assets/thumbnail',
+      size: '320x240',
+      filename: '%b.png',
+    });
+  console.log('2 ' + filePath);
+  const file = new File({
+    username: req.body.username,
     title: req.body.title,
     category: req.body.category,
-  };
-  res.status(201).json({
-    message: "Uploading files Here",
-    uploadedfile: file,
+    filename: req.file.filename,
+    filepath: req.file.path,
+    filetype: req.file.mimetype,
+    thumbnail: 'http://localhost:4000/' + filePath,
   });
+
+  file
+    .save()
+    .then((result) => {
+      res.status(200).json({
+        message: 'uploaded',
+        result: result,
+      });
+    })
+    .catch((err) => {
+      res.status(500).json({
+        message: err.message,
+      });
+    });
+});
+
+router.get('/stream', (req, res) => {
+  const { filePath } = req.query;
+  console.log(filePath);
+  const path = filePath;
+  //const type = req.body.filetype;
+  const stat = fs.statSync(path);
+  const fileSize = stat.size;
+  const range = req.headers.range;
+  if (range) {
+    const parts = range.replace(/bytes=/, '').split('-');
+    const start = parseInt(parts[0], 10);
+    const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+    const chunkSize = end - start + 1;
+    const file = fs.createReadStream(path, { start, end });
+    const head = {
+      'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+      'Accept-Ranges': 'bytes',
+      'Content-length': chunkSize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(206, head);
+    file.pipe(res);
+  } else {
+    const head = {
+      'Content-length': fileSize,
+      'Content-Type': 'video/mp4',
+    };
+    res.writeHead(200, head);
+    fs.createReadStream(path).pipe(res);
+  }
 });
 
 //route to search for a file in the DB
-router.post("/search", (req, res, next) => {
+router.post('/search', (req, res, next) => {
   res.status(200).json({
-    message: "Searching for files in the DB",
+    message: 'Searching for files in the DB',
   });
 });
 
 //route to get a file by ID
-router.get("/:id", (req, res, next) => {
+router.get('/:id', (req, res, next) => {
   const id = req.params.fileID;
-  if (id === "") {
+  if (id === '') {
     res.status(200).json({
-      message: "You did not pass an id",
+      message: 'You did not pass an id',
     });
   } else {
     res.status(200).json({
-      message: "You passed an ID",
+      message: 'You passed an ID',
     });
   }
 });

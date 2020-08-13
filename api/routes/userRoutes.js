@@ -26,9 +26,11 @@ router.post("/signup", (req, res, next) => {
   let imageBuffer = decodedImg.data;
   let type = decodedImg.type;
   let extension = mime.getExtension(type);
-  let fileName = name + "." + extension;
+  let fileName = username + "." + extension;
 
-  fs.writeFile("./profileImages/" + fileName, imageBuffer, function (err) {
+  fs.writeFile("./assets/profileImages/" + fileName, imageBuffer, function (
+    err
+  ) {
     if (err) console.log(err);
   });
   if (fs.writeFile) {

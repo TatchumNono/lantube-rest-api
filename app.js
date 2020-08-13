@@ -44,8 +44,8 @@ app.use((req, res, next) => {
 });
 
 //making the upload folder publicly availaible
-app.use("/profileImages", express.static("profileImages"));
-app.use(express.static("./profileImages"));
+app.use("/assets", express.static("assets"));
+app.use(express.static("./assets"));
 
 //middleware for protecting and differentiate between different routes
 app.use("/file", fileRoutes);
