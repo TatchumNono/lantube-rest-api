@@ -21,13 +21,33 @@ router.post('/upload', checkAuth, upload, (req, res) => {
   ffmpeg(req.file.path)
     .on('filenames', function (filenames) {
       console.log('Will generate ' + filenames.join(', '));
-      console.log('1 ' + filenames[0]);
-      filePath = './assets/thumbnail/' + filenames[0];
-      return filePath;
+      filePath = 'assets/thumbnail/' + filenames[0];
     })
     .on('end', function () {
       console.log('Screenshots taken');
-      return filePath;
+      const file = new File({
+        username: req.body.username,
+        title: req.body.title,
+        category: req.body.category,
+        filename: req.file.filename,
+        filepath: req.file.path,
+        filetype: req.file.mimetype,
+        thumbnail: 'http://localhost:4000/' + filePath,
+      });
+
+      file
+        .save()
+        .then((result) => {
+          res.status(200).json({
+            message: 'uploaded',
+            result: result,
+          });
+        })
+        .catch((err) => {
+          res.status(500).json({
+            message: err.message,
+          });
+        });
     })
     .on('error', function (err) {
       console.error(err);
@@ -38,30 +58,6 @@ router.post('/upload', checkAuth, upload, (req, res) => {
       folder: './assets/thumbnail',
       size: '320x240',
       filename: '%b.png',
-    });
-  console.log('2 ' + filePath);
-  const file = new File({
-    username: req.body.username,
-    title: req.body.title,
-    category: req.body.category,
-    filename: req.file.filename,
-    filepath: req.file.path,
-    filetype: req.file.mimetype,
-    thumbnail: 'http://localhost:4000/' + filePath,
-  });
-
-  file
-    .save()
-    .then((result) => {
-      res.status(200).json({
-        message: 'uploaded',
-        result: result,
-      });
-    })
-    .catch((err) => {
-      res.status(500).json({
-        message: err.message,
-      });
     });
 });
 
