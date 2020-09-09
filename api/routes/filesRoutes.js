@@ -9,9 +9,19 @@ const File = require('../models/fileModel');
 
 //route to get all the files
 router.get('/', (req, res, next) => {
-  res.status(200).json({
-    message: 'Routes concerned with files are here',
-  });
+  File.find()
+    .exec()
+    .then((result) => {
+      res.status(200).json({
+        count: result.length,
+        file: result,
+      });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        error: error.message,
+      });
+    });
 });
 
 //routes to upload a file checkAuth,
@@ -56,7 +66,7 @@ router.post('/upload', checkAuth, upload, (req, res) => {
       // Will take screenshots at 20%, 40%, 60% and 80% of the video
       count: 1,
       folder: './assets/thumbnail',
-      size: '320x240',
+      size: '300x200',
       filename: '%b.png',
     });
 });
@@ -101,17 +111,27 @@ router.post('/search', (req, res, next) => {
 });
 
 //route to get a file by ID
-router.get('/:id', (req, res, next) => {
+router.get('/files/:fileID', (req, res, next) => {
   const id = req.params.fileID;
-  if (id === '') {
-    res.status(200).json({
-      message: 'You did not pass an id',
+  File.find({ _id: id })
+    //.select('username _id name profileImage')
+    .exec()
+    .then((result) => {
+      if (result.length < 1) {
+        res.status(404).json({
+          message: 'file not found',
+        });
+      } else {
+        res.status(200).json({
+          file: result,
+        });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        error: error.message,
+      });
     });
-  } else {
-    res.status(200).json({
-      message: 'You passed an ID',
-    });
-  }
 });
 
 module.exports = router;

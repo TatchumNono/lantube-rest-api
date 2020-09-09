@@ -1,11 +1,11 @@
 //this is the middleware file
-const express = require("express");
+const express = require('express');
 const app = express();
-const bodyParser = require("body-parser");
-const fileRoutes = require("./api/routes/filesRoutes");
-const userRoutes = require("./api/routes/userRoutes");
-const mongoose = require("mongoose");
-const url = "mongodb://127.0.0.1:27017/lantube";
+const bodyParser = require('body-parser');
+const fileRoutes = require('./api/routes/filesRoutes');
+const userRoutes = require('./api/routes/userRoutes');
+const mongoose = require('mongoose');
+const url = 'mongodb://127.0.0.1:27017/lantube';
 
 //body parsing
 //or use app.use(express.json())
@@ -21,22 +21,22 @@ mongoose.connect(url, {
 
 const db = mongoose.connection;
 
-db.once("open", (_) => {
-  console.log("Database connected:", url);
+db.once('open', (_) => {
+  console.log('Database connected:', url);
 });
-db.on("error", (err) => {
-  console.error("connection error:", err);
+db.on('error', (err) => {
+  console.error('connection error:', err);
 });
 
 //handling cors
 //or use app.use(corse())
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "*");
-  if (req.method === "OPTIONS") {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', '*');
+  if (req.method === 'OPTIONS') {
     res.header(
-      "Access-Control-Allow-Methods",
-      "POST ,GET , PUT, DELETE, PATCH"
+      'Access-Control-Allow-Methods',
+      'POST ,GET , PUT, DELETE, PATCH'
     );
     return res.status(200).json({});
   }
@@ -44,16 +44,16 @@ app.use((req, res, next) => {
 });
 
 //making the upload folder publicly availaible
-app.use("/assets", express.static("assets"));
-app.use(express.static("./assets"));
+app.use('/assets', express.static('assets'));
+app.use(express.static('./assets'));
 
 //middleware for protecting and differentiate between different routes
-app.use("/file", fileRoutes);
-app.use("/user", userRoutes);
+app.use('/file', fileRoutes);
+app.use('/user', userRoutes);
 
 //handling errors
 app.use((req, res, next) => {
-  const error = new Error("not found");
+  const error = new Error('not found');
   error.status = 404;
   next(error);
 });
